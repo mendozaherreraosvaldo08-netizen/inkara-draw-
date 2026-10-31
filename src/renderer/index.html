@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Seguridad: solo código y estilos propios; nada externo. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'"
+    />
+    <meta name="color-scheme" content="dark" />
+    <title>Inkara Draw</title>
+    <link rel="stylesheet" href="./styles/app.css" />
+    <script defer src="./main.js"></script>
+  </head>
+  <body>
+    <!-- Pantalla de inicio: se ve al instante y se desvanece cuando la app está lista. -->
+    <div id="splash" class="splash" aria-hidden="true">
+      <div class="splash-art"><img src="./brand/cutout.png" alt="" /><img class="splash-color" src="./brand/cutout-color.png" alt="" /></div>
+      <div class="splash-shade"></div>
+      <div class="splash-info">
+        <img class="splash-name" src="./brand/wordmark-light.png" alt="" />
+        <div class="splash-load"><svg class="splash-fan" viewBox="40 0 200 100" width="190" height="95"></svg><p><span class="splash-msg">Abriendo colores…</span><b class="splash-pct">0%</b></p></div>
+        <small class="splash-ver">Editor vectorial · versión 1.8.2</small>
+      </div>
+    </div>
+    <div id="app"></div>
+  </body>
+</html>

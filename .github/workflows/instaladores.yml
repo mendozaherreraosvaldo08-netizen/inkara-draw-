@@ -1,0 +1,53 @@
+# Arma los instaladores de Inkara Draw en los servidores de GitHub (gratis):
+#   Windows: InkaraDraw-Windows.exe  (doble clic y se instala solo, sin preguntas)
+#   Linux:   InkaraDraw-Linux.AppImage (doble clic y abre)
+#   Mac:     InkaraDraw-Mac.dmg (sin firma: la primera vez clic derecho › Abrir)
+# Se ejecuta al subir una etiqueta v1.8.1, v1.9.0… y deja los archivos en "Releases",
+# con un enlace fijo a la versión más nueva:
+#   https://github.com/USUARIO/REPO/releases/latest/download/InkaraDraw-Windows.exe
+# También se puede correr a mano: pestaña Actions › "Instaladores" › Run workflow.
+name: Instaladores
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            script: dist
+            files: release/*.exe
+          - os: ubuntu-latest
+            script: dist:linux
+            files: release/*.AppImage
+          - os: macos-latest
+            script: dist:mac
+            files: release/*.dmg
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm test
+      - run: npm run ${{ matrix.script }}
+        env:
+          # Sin certificado de firma: Windows dirá "editor desconocido" la primera vez (Más información › Ejecutar de todas formas).
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: instalador-${{ matrix.os }}
+          path: ${{ matrix.files }}
+      - if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.files }}

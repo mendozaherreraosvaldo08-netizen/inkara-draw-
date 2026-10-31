@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inkara Draw</title>
+<meta name="description" content="Persigue tus ideas. Inkara las llena de color. El editor para tus placas, diplomas y reconocimientos para sublimar.">
+<link rel="icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Selva de noche: el mismo mundo que la animación de inicio. Un solo tema, oscuro a propósito. */
+  :root {
+    color-scheme: dark;
+    --night: #04120f; --card: #0b211b; --line: #17382e; --ink: #e9f5ef; --soft: #b9d8cc; --mut: #8fb3a6; --glow: #5fe0b2; --green: #1E9E76; --gold: #ffd23f;
+    --serif: "Libre Baskerville", "GFS Baskerville", Georgia, serif;
+    --sans: "Figtree", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--night); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.55; }
+  img, video { max-width: 100%; display: block; }
+  a { color: var(--glow); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; font: inherit; font-weight: 800; border-radius: 12px; padding: 14px 22px; text-decoration: none; cursor: pointer; border: 0; }
+  .btn:focus-visible { outline: 3px solid var(--glow); outline-offset: 3px; }
+  .btn.dl { background: var(--glow); color: #04221a; font-size: 19px; animation: pulse 2.4s infinite; }
+  .btn.ghost { background: rgba(233,245,239,.08); color: var(--ink); border: 1px solid rgba(233,245,239,.25); }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(95,224,178,.55); } 70% { box-shadow: 0 0 0 18px rgba(95,224,178,0); } 100% { box-shadow: 0 0 0 0 rgba(95,224,178,0); } }
+  @media (prefers-reduced-motion: reduce) { .btn.dl { animation: none; } html { scroll-behavior: auto; } }
+
+  /* Portada */
+  .hero { position: relative; min-height: min(92vh, 760px); display: flex; align-items: center; overflow: hidden; }
+  .hero video, .hero .poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(4,18,15,.94) 0%, rgba(4,18,15,.72) 45%, rgba(4,18,15,.12) 80%), linear-gradient(0deg, var(--night) 0%, rgba(4,18,15,0) 28%); }
+  .hero .wrap { position: relative; z-index: 2; width: 100%; }
+  .hero-copy { max-width: 640px; padding: 70px 0; }
+  .hero-copy img.wm { width: 300px; margin-bottom: 26px; }
+  .hero h1 { font-family: var(--serif); font-weight: 700; font-size: clamp(34px, 5vw, 56px); line-height: 1.1; margin: 0 0 18px; text-wrap: balance; }
+  .hero h1 em { font-style: italic; color: var(--glow); }
+  .hero p.lead { font-size: 20px; color: #d3ebe1; margin: 0 0 28px; max-width: 46ch; }
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .hero small { display: block; margin-top: 16px; color: #9fc9ba; font-size: 14px; }
+  .hero small a { color: #d3ebe1; }
+
+  section { padding: 64px 0; }
+  .eyebrow { color: var(--glow); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; font-size: 13px; }
+  h2 { font-family: var(--serif); font-size: clamp(28px, 3.4vw, 38px); line-height: 1.15; margin: 8px 0 12px; text-wrap: balance; }
+  .sub { color: var(--soft); max-width: 62ch; margin: 0 0 30px; }
+
+  .feats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .feat { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px; }
+  .feat svg { width: 32px; height: 32px; color: var(--glow); }
+  .feat h3 { margin: 12px 0 6px; font-size: 19px; }
+  .feat p { margin: 0; color: var(--mut); font-size: 15.5px; }
+
+  .show { display: grid; grid-template-columns: 1fr 1.6fr; gap: 40px; align-items: center; }
+  .show img { border-radius: 14px; box-shadow: 0 0 0 1px #1d4a3b, 0 30px 80px rgba(30,158,118,.22); }
+  .show ul { padding-left: 20px; color: var(--soft); margin: 0; } .show li { margin-bottom: 8px; }
+
+  .video { border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 1px #1d4a3b, 0 30px 80px rgba(0,0,0,.5); background: #000; }
+  .video video { width: 100%; aspect-ratio: 16 / 9; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; counter-reset: s; }
+  .step { border-top: 3px solid var(--green); padding-top: 14px; }
+  .step b { display: block; font-size: 19px; margin-bottom: 4px; }
+  .step span { color: var(--soft); font-size: 15.5px; }
+  .note { margin-top: 20px; color: var(--mut); font-size: 15px; }
+
+  /* Macro de Corel */
+  .macro { display: grid; grid-template-columns: 1.1fr 1fr; gap: 36px; align-items: center; background: linear-gradient(135deg, #0d2a22, #0b1d18); border: 1px solid var(--line); border-radius: 22px; padding: 36px; }
+  .macro .flow { display: grid; grid-template-columns: auto 1fr; gap: 14px 16px; align-items: center; }
+  .chip { width: 64px; height: 76px; border-radius: 10px; display: grid; place-items: end center; padding-bottom: 10px; font-weight: 800; font-size: 14px; color: #fff; position: relative; }
+  .chip::after { content: ""; position: absolute; top: 0; right: 0; width: 18px; height: 18px; background: rgba(255,255,255,.3); border-bottom-left-radius: 6px; }
+  .chip.cdr { background: #2f8a3e; } .chip.pdf { background: #c4352b; } .chip.ink { background: var(--green); }
+  .macro .flow span { color: var(--soft); font-size: 15.5px; } .macro .flow b { color: var(--ink); display: block; font-size: 17px; }
+  .macro ol { margin: 14px 0 22px; padding-left: 20px; color: var(--soft); } .macro li { margin-bottom: 6px; }
+  .btn.macro-dl { background: #fff; color: #0d4f3c; }
+  kbd { font-family: var(--sans); font-weight: 700; background: #12302a; border: 1px solid #2a5547; border-radius: 6px; padding: 1px 7px; font-size: .9em; color: var(--ink); }
+
+  .os { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .os a { display: block; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; text-decoration: none; color: var(--ink); }
+  .os a:hover, .os a:focus-visible { border-color: var(--glow); outline: none; }
+  .os a.here { border-color: var(--glow); box-shadow: 0 0 0 1px var(--glow) inset; }
+  .os b { display: block; font-size: 19px; } .os span { color: var(--mut); font-size: 14.5px; }
+
+  footer { border-top: 1px solid var(--line); padding: 26px 0 40px; color: #7fa597; font-size: 14.5px; }
+  footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
+  footer em { font-family: var(--serif); color: var(--soft); }
+  footer .legal { flex-basis: 100%; font-size: 13px; color: #5f8476; }
+
+  @media (max-width: 900px) {
+    .feats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .show, .macro { grid-template-columns: 1fr; }
+    .steps, .os { grid-template-columns: 1fr; }
+    .macro { padding: 24px; }
+    .hero-copy img.wm { width: 230px; }
+  }
+  @media (max-width: 480px) { .feats { grid-template-columns: 1fr; } .hero p.lead { font-size: 18px; } }
+</style>
+</head>
+<body>
+<header class="hero">
+  <img class="poster" src="fondo-luz.jpg" alt="">
+  <video src="fondo-luz.mp4" poster="fondo-luz.jpg" autoplay muted loop playsinline aria-hidden="true"></video>
+  <div class="wrap">
+    <div class="hero-copy">
+      <img class="wm" src="wordmark-light.png" alt="Inkara Draw">
+      <h1>Persigue tus ideas. <em>Inkara las llena de color.</em></h1>
+      <p class="lead">El editor para tus placas, diplomas y reconocimientos para sublimar. Haz todo un grupo desde tu Excel en minutos.</p>
+      <div class="actions">
+        <a class="btn dl" id="dl-main" href="#descargar">⬇ <span class="os-label">Descargar para Windows</span></a>
+        <a class="btn ghost" href="#video">▶ Ver cómo funciona</a>
+      </div>
+      <small><span id="ver">Versión 1.8.2</span> · También para <a href="#descargar">Mac y Linux</a> · Se instala en un clic</small>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="wrap">
+      <div class="eyebrow">Lo que hace</div>
+      <h2>Diseña a tu manera. Produce como nunca.</h2>
+      <p class="sub">Todo lo que necesitas para pasar de un diseño a todas las placas de un grupo, listas para la plancha.</p>
+      <div class="feats">
+        <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16"/></svg><h3>Placas en serie</h3><p>Arrastra tu Excel y salen todas las placas del grupo con su nombre y carrera.</p></div>
+        <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="12" r="4"/><circle cx="16" cy="12" r="4"/></svg><h3>Tres acabados</h3><p>Blanco, Negro y Bronce con un mismo diseño; cada placa sale como dice tu lista.</p></div>
+        <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg><h3>Tus diseños de siempre</h3><p>Abre el PDF que exportas de tu programa de diseño, divide las placas y conviértelas en plantillas.</p></div>
+        <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12l4 4 10-10"/></svg><h3>Sin errores</h3><p>Avisa de acentos y nombres que no caben, antes de imprimir.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap show">
+      <div>
+        <div class="eyebrow">Revisar</div>
+        <h2>Ve todo antes de imprimir</h2>
+        <ul>
+          <li>Tus placas de 2 en 2, como van a la plancha.</li>
+          <li>Cada placa en sus tres acabados.</li>
+          <li>Nombres sin acento corregidos con un clic.</li>
+          <li>Cuántas láminas y hojas vas a usar.</li>
+        </ul>
+      </div>
+      <img src="revisar.jpg" alt="Pantalla de revisar placas de Inkara Draw" loading="lazy">
+    </div>
+  </section>
+
+  <section id="video">
+    <div class="wrap">
+      <div class="eyebrow">Tutorial · 5 minutos</div>
+      <h2>Mira cómo funciona</h2>
+      <p class="sub">Instalar, cargar tus plantillas, hacer un pedido con tu Excel y hacer plantillas desde Corel, paso a paso y con voz.</p>
+      <div class="video"><video src="tutorial.mp4" poster="tutorial.jpg" controls preload="none" playsinline></video></div>
+    </div>
+  </section>
+
+  <section id="descargar">
+    <div class="wrap">
+      <div class="eyebrow">Instalar</div>
+      <h2>Descárgala en menos de un minuto</h2>
+      <div class="steps">
+        <div class="step"><b>1. Descarga</b><span>Pica el botón de tu computadora.</span></div>
+        <div class="step"><b>2. Abre el archivo</b><span>Si Windows avisa, la primera vez: “Más información” › “Ejecutar de todas formas”.</span></div>
+        <div class="step"><b>3. Listo</b><span>Se instala sola y deja el ícono en tu escritorio. Para actualizar, descarga la nueva y ábrela: tus plantillas se quedan.</span></div>
+      </div>
+      <div class="os" style="margin-top:28px">
+        <a data-os="win" href="#"><b>Windows</b><span>InkaraDraw-Windows.exe · se instala en un clic</span></a>
+        <a data-os="mac" href="#"><b>Mac</b><span>InkaraDraw-Mac.dmg · arrástrala a Aplicaciones</span></a>
+        <a data-os="linux" href="#"><b>Linux</b><span>InkaraDraw-Linux.AppImage · doble clic</span></a>
+      </div>
+      <p class="note">En Mac, la primera vez ve a Ajustes del Sistema › Privacidad y seguridad y pica “Abrir igualmente”.</p>
+    </div>
+  </section>
+
+  <section id="macro">
+    <div class="wrap">
+      <div class="macro">
+        <div>
+          <div class="eyebrow">Para quien trabaja en CorelDRAW</div>
+          <h2>Que el PDF se guarde solo</h2>
+          <p class="sub" style="margin-bottom:8px">Con la macro de Inkara, cada vez que guardas un diseño en Corel se guarda también su PDF. Así lo abres en Inkara desde cualquier computadora, sin tener que exportarlo a mano.</p>
+          <ol>
+            <li>En Corel presiona <kbd>Alt</kbd>+<kbd>F11</kbd> e importa <b>InkaraPDF.bas</b> en GlobalMacros.</li>
+            <li>Pega el texto de <b>ThisMacroStorage.txt</b> donde dicen las instrucciones y guarda.</li>
+            <li>Cierra y vuelve a abrir Corel. Listo: cada guardado deja su PDF.</li>
+          </ol>
+          <a class="btn macro-dl" href="inkara-macro-corel.zip" download>⬇ Descargar la macro para Corel</a>
+          <p class="note">Trae instrucciones paso a paso. También convierte a PDF carpetas completas de diseños viejos. Se hace una sola vez, unos 10 minutos.</p>
+        </div>
+        <div class="flow" aria-label="Cómo funciona la macro">
+          <div class="chip cdr">CDR</div><div><b>Guardas en Corel</b><span>Como siempre, con Ctrl+S.</span></div>
+          <div class="chip pdf">PDF</div><div><b>Sale el PDF solo</b><span>Junto al archivo o en tu carpeta de Google Drive.</span></div>
+          <div class="chip ink">INK</div><div><b>Lo abres en Inkara</b><span>Archivo › Abrir PDF de CorelDRAW, y a hacer plantillas.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span><em>Persigue tus ideas. Inkara las llena de color.</em></span>
+    <span>Inkara Draw · <span class="ver2">versión 1.8.2</span> · ¿Algo falla? Dentro de la app: Ayuda › Reportar un problema</span>
+    <span class="legal">CorelDRAW es una marca registrada de su respectivo dueño. Inkara Draw es un programa independiente y no está afiliado a Corel.</span>
+  </div>
+</footer>
+
+<script>
+  // Cambia aquí tu usuario de GitHub y el nombre del proyecto.
+  const REPO = 'mendozaherreraosvaldo08-netizen/inkara-draw-';
+  const FILES = { win: 'InkaraDraw-Windows.exe', mac: 'InkaraDraw-Mac.dmg', linux: 'InkaraDraw-Linux.AppImage' };
+  const NAMES = { win: 'Windows', mac: 'Mac', linux: 'Linux' };
+  const ua = navigator.userAgent || '';
+  const os = /Mac|iPhone|iPad/.test(ua) ? 'mac' : /Linux|CrOS/.test(ua) && !/Android|Windows/.test(ua) ? 'linux' : 'win';
+  const url = (k) => `https://github.com/${REPO}/releases/latest/download/${FILES[k]}`;
+  document.querySelectorAll('.os-label').forEach((el) => (el.textContent = 'Descargar para ' + NAMES[os]));
+  document.getElementById('dl-main').href = url(os);
+  document.querySelectorAll('.os a').forEach((a) => { a.href = url(a.dataset.os); a.classList.toggle('here', a.dataset.os === os); });
+</script>
+</body>
+</html>

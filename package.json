@@ -1,0 +1,122 @@
+{
+  "name": "trazo",
+  "productName": "Inkara Draw",
+  "version": "1.8.2",
+  "description": "Inkara Draw: editor vectorial de escritorio para Windows, como CorelDRAW.",
+  "private": true,
+  "main": "dist/main/main.js",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs --watch",
+    "start": "node scripts/build.mjs && electron .",
+    "test": "node scripts/test.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build:prod": "node scripts/build.mjs --production",
+    "dist": "npm run build:prod && electron-builder --win nsis --x64",
+    "dist:dir": "npm run build:prod && electron-builder --win dir --x64",
+    "dist:linux": "npm run build:prod && electron-builder --linux AppImage --x64",
+    "dist:mac": "npm run build:prod && electron-builder --mac dmg"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "electron": "^44.0.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.0",
+    "electron-builder": "^26.0.12",
+    "pdfjs-dist": "^6.2.108"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "author": "Inkara Draw",
+  "build": {
+    "appId": "mx.trazo.editor",
+    "productName": "Inkara Draw",
+    "copyright": "Inkara Draw — editor vectorial",
+    "directories": {
+      "output": "release",
+      "buildResources": "assets"
+    },
+    "files": [
+      "dist/**/*",
+      "assets/**/*",
+      "package.json",
+      "!dist/**/*.map"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "InkaraDraw-Windows.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Inkara Draw",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "uninstallDisplayName": "Inkara Draw",
+      "language": "3082",
+      "installerLanguages": [
+        "es_ES"
+      ],
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true
+    },
+    "fileAssociations": [
+      {
+        "ext": "ink",
+        "name": "InkaraDraw.Diseno",
+        "description": "Diseño de Inkara Draw",
+        "icon": "assets/icon.ico",
+        "role": "Editor"
+      },
+      {
+        "ext": "trz",
+        "name": "InkaraDraw.DisenoAnterior",
+        "description": "Diseño de Inkara Draw (versión anterior)",
+        "icon": "assets/icon.ico",
+        "role": "Editor"
+      }
+    ],
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "category": "Graphics",
+      "artifactName": "InkaraDraw-Linux.${ext}",
+      "synopsis": "Editor de placas para sublimar"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "category": "public.app-category.graphics-design",
+      "artifactName": "InkaraDraw-Mac.${ext}",
+      "identity": null
+    },
+    "publish": null
+  }
+}
