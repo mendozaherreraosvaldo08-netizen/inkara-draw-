@@ -50,6 +50,8 @@ jobs:
 
   release:
     needs: build
+    # Publica lo que sí se armó aunque un sistema falle.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
