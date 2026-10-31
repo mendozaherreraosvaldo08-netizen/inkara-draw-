@@ -1,7 +1,7 @@
 {
   "name": "trazo",
   "productName": "Inkara Draw",
-  "version": "1.8.2",
+  "version": "1.8.3",
   "description": "Inkara Draw: editor vectorial de escritorio para Windows, como CorelDRAW.",
   "private": true,
   "main": "dist/main/main.js",

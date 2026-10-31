@@ -34,7 +34,7 @@ Editor vectorial de escritorio (Windows) tipo CorelDRAW, para una persona que di
 - Sin internet a npm en el entorno de Claude: enlazar `esbuild`/`typescript`/`pdfjs-dist` desde `/opt/npm-tools/node_modules` y `~/.npm-global/lib/node_modules`.
 
 ## Cómo comprobar antes de entregar
-1. `npm run build` y `npm test` (26 pruebas del motor deben pasar).
+1. `npm run build` y `npm test` (27 pruebas del motor deben pasar).
 2. Abrir `dist/renderer/index.html` con Playwright y revisar que no haya errores de página.
 3. Prueba de humo: clic en cada opción de cada menú, sin selección y con selección (0 errores en la 1.5).
 4. Mirar capturas: pantalla de inicio, ventana, tema claro y oscuro.
@@ -82,6 +82,9 @@ Editor vectorial de escritorio (Windows) tipo CorelDRAW, para una persona que di
 - `package.json`: NSIS `oneClick: true` + `runAfterFinish` (doble clic y se instala solo, abre la app), nombres fijos `InkaraDraw-Windows.exe`, `InkaraDraw-Linux.AppImage`, `InkaraDraw-Mac.dmg` (sin firma). Scripts `dist`, `dist:linux`, `dist:mac`.
 - `.github/workflows/instaladores.yml`: arma los tres cuando cambia `package.json` en `main` (o a mano en Actions) y publica el Release `v<versión>` (enlace fijo `releases/latest/download/...`). Desde el entorno de Claude no se pueden empujar etiquetas (el proxy corta), por eso el disparador es por versión.
 - Desde el entorno de Claude NO se puede armar: npm, GitHub y HuggingFace están bloqueados. Opciones: cuenta de GitHub del usuario, o correr `npm run dist` en su PC con el enlace del escritorio (Windows tiene voces SAPI en español para narrar videos).
+
+## Hecho en 1.8.3
+- Listas sin títulos: `tableFromRecords` busca los títulos en las primeras 10 filas (título conocido); si no hay, `guessColumns` adivina Nombre/Carrera/Generación/Acabado por el contenido. `canonicalField` + `ALIASES` (Alumno→Nombre, Licenciatura→Carrera, Color→Acabado…). `fillText` quita "generación" de la celda si la plantilla ya lo dice. `matchFinish`: dorado/cobre → Bronce si no hay Dorado.
 
 ## Hecho en 1.8.2
 - Pantalla de inicio en video: `brand/intro.mp4` (completa, con sonido, primera vez; `localStorage inkara.intro.visto`) y `brand/intro-corta.mp4` (final, sin sonido). `splash.ts`: `playIntro` con botón Saltar y respaldo a la pantalla del abanico si el video falla o no arranca en 2.5 s; `replayIntro` en Ayuda. `main.ts`: `autoplay-policy=no-user-gesture-required`.

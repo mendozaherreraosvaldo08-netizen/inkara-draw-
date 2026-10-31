@@ -97,10 +97,14 @@ export function matchFinish(finishes: Finish[], value: string): Finish | null {
   const v = norm(value);
   if (!v) return null;
   const want = SYNONYMS[v] ?? v;
-  return finishes.find((f) => norm(f.name) === want) ?? finishes.find((f) => norm(f.name).length >= 4 && want.length >= 4 && (want.startsWith(norm(f.name).slice(0, 4)) || norm(f.name).startsWith(want.slice(0, 4)))) ?? null;
+  const found = finishes.find((f) => norm(f.name) === want) ?? finishes.find((f) => norm(f.name).length >= 4 && want.length >= 4 && (want.startsWith(norm(f.name).slice(0, 4)) || norm(f.name).startsWith(want.slice(0, 4)))) ?? null;
+  if (found) return found;
+  // Si la plantilla no tiene Dorado, "dorado" usa el Bronce (el metálico que sí tiene).
+  if (want === 'dorado' || want === 'cobre') return finishes.find((f) => norm(f.name) === 'bronce') ?? null;
+  return null;
 }
 
-const FINISH_COLUMNS = ['acabado', 'acabados', 'color', 'colores', 'fondo', 'color de placa', 'tipo de placa'];
+const FINISH_COLUMNS = ['acabado', 'acabados', 'color', 'colores', 'fondo', 'color de placa', 'tipo de placa', 'material'];
 
 /** La columna de la tabla que dice el acabado (si la hay). */
 export function findFinishColumn(columns: string[]): string | null {

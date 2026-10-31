@@ -61,12 +61,66 @@ export function parseTable(text: string): { columns: string[]; rows: string[][] 
   return tableFromRecords(records);
 }
 
-/** Tabla a partir de filas de celdas (la primera fila no vacía son los títulos). */
+// Nombres de columna que se entienden aunque no se llamen igual que el campo.
+const ALIASES: Record<string, string[]> = {
+  nombre: ['nombre', 'nombres', 'nombre completo', 'nombre del alumno', 'alumno', 'alumna', 'alumnos', 'estudiante', 'egresado', 'egresada', 'graduado', 'graduada'],
+  carrera: ['carrera', 'licenciatura', 'programa', 'programa educativo', 'especialidad', 'ingenieria', 'facultad', 'grado'],
+  generacion: ['generacion', 'gen', 'periodo', 'ciclo', 'ciclo escolar'],
+  acabado: ['acabado', 'acabados', 'color', 'colores', 'fondo', 'color de placa', 'tipo de placa', 'material'],
+};
+/** A qué campo conocido corresponde un título ("Alumno" → nombre), o null. */
+export function canonicalField(name: string): string | null {
+  const n = norm(name).replace(/[:.]/g, '').trim();
+  for (const [key, list] of Object.entries(ALIASES)) if (list.includes(n)) return key;
+  return null;
+}
+const CANON_TITLE: Record<string, string> = { nombre: 'Nombre', carrera: 'Carrera', generacion: 'Generación', acabado: 'Acabado' };
+
+const FINISH_WORDS = new Set(['blanco', 'blanca', 'negro', 'negra', 'bronce', 'dorado', 'dorada', 'oro', 'plata', 'plateado', 'plateada', 'cobre', 'cafe', 'gris']);
+const CAREER = /^(lic|lcda?|licenciatura|ing|ingenier|arq|arquitect|mtr|maestr|doctor|dr|tec|tecnic|contador|quimic|medic|enfermer|psicolog|derecho|admin)/;
+const YEARS = /\b(19|20)\d{2}\b|generaci/;
+
+/** Sin títulos: adivina cada columna por lo que tiene (nombres, carreras, años, acabados). */
+function guessColumns(rows: string[][], width: number): string[] {
+  const share = (i: number, test: (v: string) => boolean) => {
+    const vals = rows.map((r) => norm(r[i] ?? '')).filter(Boolean);
+    return vals.length ? vals.filter(test).length / vals.length : 0;
+  };
+  const used = new Set<string>();
+  const roles: (string | null)[] = Array.from({ length: width }, () => null);
+  const pick = (key: string, test: (v: string) => boolean, min: number) => {
+    let best = -1, bestScore = min;
+    for (let i = 0; i < width; i++) if (!roles[i]) { const sc = share(i, test); if (sc >= bestScore) { best = i; bestScore = sc; } }
+    if (best >= 0 && !used.has(key)) { roles[best] = key; used.add(key); }
+  };
+  pick('acabado', (v) => FINISH_WORDS.has(v.replace(/\s+/g, ' ').trim()), 0.6);
+  pick('generacion', (v) => YEARS.test(v), 0.6);
+  pick('carrera', (v) => CAREER.test(v), 0.5);
+  pick('nombre', (v) => /^[a-zñ'. -]+$/.test(v) && v.trim().split(/\s+/).length >= 2, 0.6);
+  return roles.map((r, i) => (r ? CANON_TITLE[r]! : `Columna ${i + 1}`));
+}
+
+/**
+ * Tabla a partir de filas de celdas. Los títulos son la primera fila que tiene un
+ * título conocido (Nombre, Alumno, Carrera…), aunque arriba haya un renglón con el
+ * nombre del grupo. Si la lista no tiene títulos, las columnas se adivinan.
+ */
 export function tableFromRecords(input: string[][]): { columns: string[]; rows: string[][] } {
-  const records = input.slice(input.findIndex((r) => r.some((c) => c.trim() !== '')));
-  if (records.length === 0 || !records[0]) return { columns: [], rows: [] };
-  const header = records[0]!.map((c) => c.trim());
+  const records = input.filter((r) => r.some((c) => (c ?? '').trim() !== ''));
+  if (records.length === 0) return { columns: [], rows: [] };
   const width = Math.max(...records.map((r) => r.length));
+  let headerAt = records.slice(0, 10).findIndex((r) => r.some((c) => canonicalField(c ?? '') !== null));
+  // Una sola celda en la primera fila (p. ej. "Lista UNICEQ") y títulos normales abajo: también cuenta.
+  if (headerAt < 0 && records.length > 1 && records[0]!.filter((c) => (c ?? '').trim()).length >= 2 && guessColumns(records.slice(1, 30), width).every((c) => c.startsWith('Columna'))) headerAt = 0;
+  let header: string[];
+  let body: string[][];
+  if (headerAt >= 0) {
+    header = records[headerAt]!.map((c) => (c ?? '').trim());
+    body = records.slice(headerAt + 1);
+  } else {
+    header = guessColumns(records.slice(0, 50), width);
+    body = records;
+  }
   const seen = new Set<string>();
   const columns = Array.from({ length: width }, (_, i) => {
     let name = header[i] || `Columna ${i + 1}`;
@@ -77,8 +131,7 @@ export function tableFromRecords(input: string[][]): { columns: string[]; rows: 
     seen.add(norm(name));
     return name;
   });
-  const rows = records
-    .slice(1)
+  const rows = body
     .map((r) => columns.map((_, i) => (r[i] ?? '').trim()))
     .filter((r) => r.some((c) => c !== '')); // filas vacías fuera
   return { columns, rows };
@@ -98,8 +151,15 @@ export function fieldsInDocument(doc: TrazoDocument): { text: string[]; photos: 
 }
 
 /** Valor de una columna (sin importar mayúsculas ni acentos en el nombre del campo). */
+function columnIndex(columns: string[], field: string): number {
+  const i = columns.findIndex((c) => norm(c) === norm(field));
+  if (i >= 0) return i;
+  // "Nombre" también encuentra la columna "Alumno", "Carrera" la de "Licenciatura"…
+  const key = canonicalField(field);
+  return key ? columns.findIndex((c) => canonicalField(c) === key) : -1;
+}
 function valueOf(merge: MergeData, row: string[], field: string): string | undefined {
-  const i = merge.columns.findIndex((c) => norm(c) === norm(field));
+  const i = columnIndex(merge.columns, field);
   return i < 0 ? undefined : (row[i] ?? '');
 }
 
@@ -107,11 +167,18 @@ function valueOf(merge: MergeData, row: string[], field: string): string | undef
 export function unknownFields(doc: TrazoDocument): string[] {
   if (!doc.merge) return [];
   const { text, photos } = fieldsInDocument(doc);
-  return [...text, ...photos].filter((f) => !doc.merge!.columns.some((c) => norm(c) === norm(f)));
+  return [...text, ...photos].filter((f) => columnIndex(doc.merge!.columns, f) < 0);
 }
 
 export function fillText(template: string, merge: MergeData, row: string[]): string {
-  return template.replace(FIELD_PATTERN, (whole, field: string) => valueOf(merge, row, field) ?? whole);
+  // Si la plantilla ya dice "Generación:" y la celda también ("generacion 2022-2026"), no se repite.
+  const fixed = template.replace(FIELD_PATTERN, '');
+  return template.replace(FIELD_PATTERN, (whole, field: string) => {
+    const v = valueOf(merge, row, field);
+    if (v === undefined) return whole;
+    if (canonicalField(field) === 'generacion' && /generaci[oó]n/i.test(fixed)) return v.replace(/^\s*generaci[oó]n\s*:?\s*/i, '');
+    return v;
+  });
 }
 
 /** Nombre de archivo de una placa (sin extensión), seguro para Windows. */

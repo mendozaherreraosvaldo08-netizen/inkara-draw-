@@ -953,3 +953,30 @@ test('dividir en automático: 2 placas o un diploma completo', async () => {
   assert.deepEqual(r.pages[1]!.shapes.map((s) => s.id), ['b']);
   assert.deepEqual(r.pages[2]!.shapes.filter((s) => s.name !== 'Fondo').map((s) => s.id), ['dip', 'L', 'R']); // el diploma no se parte
 });
+
+test('Listas sin títulos o con títulos distintos', async () => {
+  const { tableFromRecords, fillText } = await import('../src/engine/merge');
+  const { matchFinish } = await import('../src/engine/finishes');
+  // Como la manda el cliente: sin renglón de títulos.
+  const raw = [
+    ['daniela campos herrera', 'ing civil', 'generacion 2022-2026', 'blanco '],
+    ['valeria ruiz soto ', 'lic en comercio', 'generacion 2022-2026', 'negro'],
+    ['jorge medina perez', 'lic matematicas', 'generacion 2022-2026', 'dorado'],
+  ];
+  const t = tableFromRecords(raw);
+  assert.deepEqual(t.columns, ['Nombre', 'Carrera', 'Generación', 'Acabado']);
+  assert.equal(t.rows.length, 3, 'la primera fila es un alumno, no títulos');
+  const merge = { columns: t.columns, rows: t.rows };
+  assert.equal(fillText('Generación: {{Generación}}', merge as never, t.rows[0]!), 'Generación: 2022-2026');
+  assert.equal(fillText('{{Nombre}} · {{Carrera}}', merge as never, t.rows[1]!), 'valeria ruiz soto · lic en comercio');
+
+  // Con un título del grupo arriba y columnas con otro nombre.
+  const t2 = tableFromRecords([['Lista del grupo'], [], ['Alumno', 'Licenciatura', 'Color'], ['Ana Pérez Gil', 'Derecho', 'Negro']]);
+  assert.deepEqual(t2.columns.slice(0, 3), ['Alumno', 'Licenciatura', 'Color']);
+  const m2 = { columns: t2.columns, rows: t2.rows };
+  assert.equal(fillText('{{Nombre}} / {{Carrera}}', m2 as never, t2.rows[0]!), 'Ana Pérez Gil / Derecho');
+
+  // "dorado" sin acabado Dorado → Bronce.
+  const fin = [{ name: 'Blanco' }, { name: 'Negro' }, { name: 'Bronce' }] as never;
+  assert.equal(matchFinish(fin, 'dorado')!.name, 'Bronce');
+});
