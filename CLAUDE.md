@@ -80,7 +80,7 @@ Editor vectorial de escritorio (Windows) tipo CorelDRAW, para una persona que di
 
 ## Instaladores de un clic (preparado, falta GitHub o la PC del usuario)
 - `package.json`: NSIS `oneClick: true` + `runAfterFinish` (doble clic y se instala solo, abre la app), nombres fijos `InkaraDraw-Windows.exe`, `InkaraDraw-Linux.AppImage`, `InkaraDraw-Mac.dmg` (sin firma). Scripts `dist`, `dist:linux`, `dist:mac`.
-- `.github/workflows/instaladores.yml`: arma los tres al subir una etiqueta `v*` y los deja en Releases (enlace fijo `releases/latest/download/...`).
+- `.github/workflows/instaladores.yml`: arma los tres cuando cambia `package.json` en `main` (o a mano en Actions) y publica el Release `v<versión>` (enlace fijo `releases/latest/download/...`). Desde el entorno de Claude no se pueden empujar etiquetas (el proxy corta), por eso el disparador es por versión.
 - Desde el entorno de Claude NO se puede armar: npm, GitHub y HuggingFace están bloqueados. Opciones: cuenta de GitHub del usuario, o correr `npm run dist` en su PC con el enlace del escritorio (Windows tiene voces SAPI en español para narrar videos).
 
 ## Hecho en 1.8.2
