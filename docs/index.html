@@ -170,7 +170,7 @@
       </div>
       <div class="os" style="margin-top:28px">
         <a data-os="win" href="#"><b>Windows</b><span>InkaraDraw-Windows.exe · se instala en un clic</span></a>
-        <a data-os="mac" href="#"><b>Mac</b><span>InkaraDraw-Mac.dmg · arrástrala a Aplicaciones</span></a>
+        <a data-os="mac" href="#"><b>Mac</b><span>Muy pronto · por ahora usa Windows o Linux</span></a>
         <a data-os="linux" href="#"><b>Linux</b><span>InkaraDraw-Linux.AppImage · doble clic</span></a>
       </div>
       <p class="note">En Mac, la primera vez ve a Ajustes del Sistema › Privacidad y seguridad y pica “Abrir igualmente”.</p>
@@ -217,7 +217,7 @@
   const NAMES = { win: 'Windows', mac: 'Mac', linux: 'Linux' };
   const ua = navigator.userAgent || '';
   const os = /Mac|iPhone|iPad/.test(ua) ? 'mac' : /Linux|CrOS/.test(ua) && !/Android|Windows/.test(ua) ? 'linux' : 'win';
-  const url = (k) => `https://github.com/${REPO}/releases/latest/download/${FILES[k]}`;
+  const url = (k) => (k === 'mac' ? `https://github.com/${REPO}/releases/latest` : `https://github.com/${REPO}/releases/latest/download/${FILES[k]}`);
   document.querySelectorAll('.os-label').forEach((el) => (el.textContent = 'Descargar para ' + NAMES[os]));
   document.getElementById('dl-main').href = url(os);
   document.querySelectorAll('.os a').forEach((a) => { a.href = url(a.dataset.os); a.classList.toggle('here', a.dataset.os === os); });
